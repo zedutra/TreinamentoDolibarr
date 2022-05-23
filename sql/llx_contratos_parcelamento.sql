@@ -14,7 +14,7 @@
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
 
-CREATE TABLE llx_contratos_contrato(
+CREATE TABLE llx_contratos_parcelamento(
 	-- BEGIN MODULEBUILDER FIELDS
 	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
 	ref varchar(128) NOT NULL, 
@@ -23,8 +23,10 @@ CREATE TABLE llx_contratos_contrato(
 	fk_user_modif integer, 
 	import_key varchar(14), 
 	status integer NOT NULL, 
-	contratoprincipal integer, 
-	data datetime, 
-	valor double NOT NULL
+	contratoprincipal integer NOT NULL, 
+	valor double NOT NULL, 
+	quantidade integer NOT NULL, 
+	juros integer NOT NULL, 
+	novovalor double NOT NULL
 	-- END MODULEBUILDER FIELDS
 ) ENGINE=innodb;

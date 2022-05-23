@@ -17,9 +17,9 @@
  */
 
 /**
- *   	\file       contrato_card.php
+ *   	\file       historicodejuros_card.php
  *		\ingroup    contratos
- *		\brief      Page to create/edit/view contrato
+ *		\brief      Page to create/edit/view historicodejuros
  */
 
 //if (! defined('NOREQUIREDB'))              define('NOREQUIREDB', '1');				// Do not create database handler $db
@@ -78,8 +78,8 @@ if (!$res) {
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formprojet.class.php';
-dol_include_once('/contratos/class/contrato.class.php');
-dol_include_once('/contratos/lib/contratos_contrato.lib.php');
+dol_include_once('/contratos/class/historicodejuros.class.php');
+dol_include_once('/contratos/lib/contratos_historicodejuros.lib.php');
 
 // Load translation files required by the page
 $langs->loadLangs(array("contratos@contratos", "other"));
@@ -90,17 +90,16 @@ $ref = GETPOST('ref', 'alpha');
 $action = GETPOST('action', 'aZ09');
 $confirm = GETPOST('confirm', 'alpha');
 $cancel = GETPOST('cancel', 'aZ09');
-$contextpage = GETPOST('contextpage', 'aZ') ? GETPOST('contextpage', 'aZ') : 'contratocard'; // To manage different context of search
+$contextpage = GETPOST('contextpage', 'aZ') ? GETPOST('contextpage', 'aZ') : 'historicodejuroscard'; // To manage different context of search
 $backtopage = GETPOST('backtopage', 'alpha');
 $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');
 $lineid   = GETPOST('lineid', 'int');
 
 // Initialize technical objects
-$object = new Contrato($db);
+$object = new HistoricoDeJuros($db);
 $extrafields = new ExtraFields($db);
 $diroutputmassaction = $conf->contratos->dir_output.'/temp/massgeneration/'.$user->id;
-$hookmanager->initHooks(array('contratocard', 'globalcard')); // Note that conf->hooks_modules contains array
-
+$hookmanager->initHooks(array('historicodejuroscard', 'globalcard')); // Note that conf->hooks_modules contains array
 
 // Fetch optionals attributes and labels
 $extrafields->fetch_name_optionals_label($object->table_element);
@@ -127,11 +126,11 @@ include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php'; // Must be includ
 // Set $enablepermissioncheck to 1 to enable a minimum low level of checks
 $enablepermissioncheck = 0;
 if ($enablepermissioncheck) {
-	$permissiontoread = $user->rights->contratos->contrato->read;
-	$permissiontoadd = $user->rights->contratos->contrato->write; // Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
-	$permissiontodelete = $user->rights->contratos->contrato->delete || ($permissiontoadd && isset($object->status) && $object->status == $object::STATUS_DRAFT);
-	$permissionnote = $user->rights->contratos->contrato->write; // Used by the include of actions_setnotes.inc.php
-	$permissiondellink = $user->rights->contratos->contrato->write; // Used by the include of actions_dellink.inc.php
+	$permissiontoread = $user->rights->contratos->historicodejuros->read;
+	$permissiontoadd = $user->rights->contratos->historicodejuros->write; // Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
+	$permissiontodelete = $user->rights->contratos->historicodejuros->delete || ($permissiontoadd && isset($object->status) && $object->status == $object::STATUS_DRAFT);
+	$permissionnote = $user->rights->contratos->historicodejuros->write; // Used by the include of actions_setnotes.inc.php
+	$permissiondellink = $user->rights->contratos->historicodejuros->write; // Used by the include of actions_dellink.inc.php
 } else {
 	$permissiontoread = 1;
 	$permissiontoadd = 1; // Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
@@ -140,7 +139,7 @@ if ($enablepermissioncheck) {
 	$permissiondellink = 1;
 }
 
-$upload_dir = $conf->contratos->multidir_output[isset($object->entity) ? $object->entity : 1].'/contrato';
+$upload_dir = $conf->contratos->multidir_output[isset($object->entity) ? $object->entity : 1].'/historicodejuros';
 
 // Security check (enable the most restrictive one)
 //if ($user->socid > 0) accessforbidden();
@@ -164,19 +163,19 @@ if ($reshook < 0) {
 if (empty($reshook)) {
 	$error = 0;
 
-	$backurlforlist = dol_buildpath('/contratos/contrato_list.php', 1);
+	$backurlforlist = dol_buildpath('/contratos/historicodejuros_list.php', 1);
 
 	if (empty($backtopage) || ($cancel && empty($id))) {
 		if (empty($backtopage) || ($cancel && strpos($backtopage, '__ID__'))) {
 			if (empty($id) && (($action != 'add' && $action != 'create') || $cancel)) {
 				$backtopage = $backurlforlist;
 			} else {
-				$backtopage = dol_buildpath('/contratos/contrato_card.php', 1).'?id='.((!empty($id) && $id > 0) ? $id : '__ID__');
+				$backtopage = dol_buildpath('/contratos/historicodejuros_card.php', 1).'?id='.((!empty($id) && $id > 0) ? $id : '__ID__');
 			}
 		}
 	}
 
-	$triggermodname = 'CONTRATOS_CONTRATO_MODIFY'; // Name of trigger action code to execute when we modify record
+	$triggermodname = 'CONTRATOS_HISTORICODEJUROS_MODIFY'; // Name of trigger action code to execute when we modify record
 
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
 	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
@@ -201,9 +200,9 @@ if (empty($reshook)) {
 	}
 
 	// Actions to send emails
-	$triggersendname = 'CONTRATOS_CONTRATO_SENTBYMAIL';
-	$autocopy = 'MAIN_MAIL_AUTOCOPY_CONTRATO_TO';
-	$trackid = 'contrato'.$object->id;
+	$triggersendname = 'CONTRATOS_HISTORICODEJUROS_SENTBYMAIL';
+	$autocopy = 'MAIN_MAIL_AUTOCOPY_HISTORICODEJUROS_TO';
+	$trackid = 'historicodejuros'.$object->id;
 	include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
 }
 
@@ -220,7 +219,7 @@ $form = new Form($db);
 $formfile = new FormFile($db);
 $formproject = new FormProjets($db);
 
-$title = $langs->trans("Contrato");
+$title = $langs->trans("HistoricoDeJuros");
 $help_url = '';
 llxHeader('', $title, $help_url);
 
@@ -247,7 +246,7 @@ if ($action == 'create') {
 		exit;
 	}
 
-	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("Contrato")), '', 'object_'.$object->picto);
+	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("HistoricoDeJuros")), '', 'object_'.$object->picto);
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
 	print '<input type="hidden" name="token" value="'.newToken().'">';
@@ -267,8 +266,7 @@ if ($action == 'create') {
 	print '<table class="border centpercent tableforfieldcreate">'."\n";
 
 	// Common attributes
-	//include DOL_DOCUMENT_ROOT.'/core/tpl/commonfields_add.tpl.php';
-	include DOL_DOCUMENT_ROOT.'/custom/contratos/core/tpl/parcelamentofields_add.tpl.php';
+	include DOL_DOCUMENT_ROOT.'/core/tpl/commonfields_add.tpl.php';
 
 	// Other attributes
 	include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_add.tpl.php';
@@ -286,7 +284,7 @@ if ($action == 'create') {
 
 // Part to edit record
 if (($id || $ref) && $action == 'edit') {
-	print load_fiche_titre($langs->trans("Contrato"), '', 'object_'.$object->picto);
+	print load_fiche_titre($langs->trans("HistoricoDeJuros"), '', 'object_'.$object->picto);
 
 	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
 	print '<input type="hidden" name="token" value="'.newToken().'">';
@@ -322,14 +320,14 @@ if (($id || $ref) && $action == 'edit') {
 if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'create'))) {
 	$res = $object->fetch_optionals();
 
-	$head = contratoPrepareHead($object);
-	print dol_get_fiche_head($head, 'card', $langs->trans("Contrato"), -1, $object->picto);
+	$head = historicodejurosPrepareHead($object);
+	print dol_get_fiche_head($head, 'card', $langs->trans("HistoricoDeJuros"), -1, $object->picto);
 
 	$formconfirm = '';
 
 	// Confirmation to delete
 	if ($action == 'delete') {
-		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('DeleteContrato'), $langs->trans('ConfirmDeleteObject'), 'confirm_delete', '', 0, 1);
+		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('DeleteHistoricoDeJuros'), $langs->trans('ConfirmDeleteObject'), 'confirm_delete', '', 0, 1);
 	}
 	// Confirmation to delete line
 	if ($action == 'deleteline') {
@@ -373,7 +371,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	// Object card
 	// ------------------------------------------------------------
-	$linkback = '<a href="'.dol_buildpath('/contratos/contrato_list.php', 1).'?restore_lastsearch_values=1'.(!empty($socid) ? '&socid='.$socid : '').'">'.$langs->trans("BackToList").'</a>';
+	$linkback = '<a href="'.dol_buildpath('/contratos/historicodejuros_list.php', 1).'?restore_lastsearch_values=1'.(!empty($socid) ? '&socid='.$socid : '').'">'.$langs->trans("BackToList").'</a>';
 
 	$morehtmlref = '<div class="refidno">';
 	/*
@@ -500,12 +498,6 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
 		}
 
-		// Botão de parcelamento
-		// Se o objeto for um contrato principal, o botão será criado, redireciona para uma página com as parcelas já existentes.
-		if (!$object->contratoprincipal){
-			print '<a class="butAction" href="contrato_list2.php?id='. $object->id. '">'. 'parcelas'. '</a>'. "\n";
-		}
-		
 		if (empty($reshook)) {
 			// Send
 			if (empty($user->socid)) {
@@ -575,11 +567,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			$urlsource = $_SERVER["PHP_SELF"]."?id=".$object->id;
 			$genallowed = $permissiontoread; // If you can read, you can build the PDF to read content
 			$delallowed = $permissiontoadd; // If you can create/edit, you can remove a file on card
-			print $formfile->showdocuments('contratos:Contrato', $object->element.'/'.$objref, $filedir, $urlsource, $genallowed, $delallowed, $object->model_pdf, 1, 0, 0, 28, 0, '', '', '', $langs->defaultlang);
+			print $formfile->showdocuments('contratos:HistoricoDeJuros', $object->element.'/'.$objref, $filedir, $urlsource, $genallowed, $delallowed, $object->model_pdf, 1, 0, 0, 28, 0, '', '', '', $langs->defaultlang);
 		}
 
 		// Show links to link elements
-		$linktoelem = $form->showLinkToObjectBlock($object, null, array('contrato'));
+		$linktoelem = $form->showLinkToObjectBlock($object, null, array('historicodejuros'));
 		$somethingshown = $form->showLinkedObjectBlock($object, $linktoelem);
 
 
@@ -587,7 +579,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 		$MAXEVENT = 10;
 
-		$morehtmlcenter = dolGetButtonTitle($langs->trans('SeeAll'), '', 'fa fa-list-alt imgforviewmode', dol_buildpath('/contratos/contrato_agenda.php', 1).'?id='.$object->id);
+		$morehtmlcenter = dolGetButtonTitle($langs->trans('SeeAll'), '', 'fa fa-list-alt imgforviewmode', dol_buildpath('/contratos/historicodejuros_agenda.php', 1).'?id='.$object->id);
 
 		// List of actions on element
 		include_once DOL_DOCUMENT_ROOT.'/core/class/html.formactions.class.php';
@@ -603,10 +595,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	}
 
 	// Presend form
-	$modelmail = 'contrato';
+	$modelmail = 'historicodejuros';
 	$defaulttopic = 'InformationMessage';
 	$diroutput = $conf->contratos->dir_output;
-	$trackid = 'contrato'.$object->id;
+	$trackid = 'historicodejuros'.$object->id;
 
 	include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
 }

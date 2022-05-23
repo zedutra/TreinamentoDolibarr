@@ -17,10 +17,11 @@
 -- BEGIN MODULEBUILDER INDEXES
 ALTER TABLE llx_contratos_contrato ADD INDEX idx_contratos_contrato_rowid (rowid);
 ALTER TABLE llx_contratos_contrato ADD INDEX idx_contratos_contrato_ref (ref);
-ALTER TABLE llx_contratos_contrato ADD INDEX idx_contratos_contrato_fk_soc (fk_soc);
-ALTER TABLE llx_contratos_contrato ADD INDEX idx_contratos_contrato_fk_project (fk_project);
 ALTER TABLE llx_contratos_contrato ADD CONSTRAINT llx_contratos_contrato_fk_user_creat FOREIGN KEY (fk_user_creat) REFERENCES llx_user(rowid);
 ALTER TABLE llx_contratos_contrato ADD INDEX idx_contratos_contrato_status (status);
+ALTER TABLE llx_contratos_contrato ADD INDEX idx_contratos_contrato_contratoprincipal (contratoprincipal);
+ALTER TABLE llx_contratos_contrato ADD INDEX idx_contratos_contrato_data (data);
+ALTER TABLE llx_contratos_contrato ADD INDEX idx_contratos_contrato_valor (valor);
 -- END MODULEBUILDER INDEXES
 
 --ALTER TABLE llx_contratos_contrato ADD UNIQUE INDEX uk_contratos_contrato_fieldxy(fieldx, fieldy);

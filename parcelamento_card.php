@@ -17,9 +17,9 @@
  */
 
 /**
- *   	\file       contrato_card.php
+ *   	\file       parcelamento_card.php
  *		\ingroup    contratos
- *		\brief      Page to create/edit/view contrato
+ *		\brief      Page to create/edit/view parcelamento
  */
 
 //if (! defined('NOREQUIREDB'))              define('NOREQUIREDB', '1');				// Do not create database handler $db
@@ -78,6 +78,8 @@ if (!$res) {
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formprojet.class.php';
+dol_include_once('/contratos/class/parcelamento.class.php');
+dol_include_once('/contratos/lib/contratos_parcelamento.lib.php');
 dol_include_once('/contratos/class/contrato.class.php');
 dol_include_once('/contratos/lib/contratos_contrato.lib.php');
 
@@ -90,17 +92,19 @@ $ref = GETPOST('ref', 'alpha');
 $action = GETPOST('action', 'aZ09');
 $confirm = GETPOST('confirm', 'alpha');
 $cancel = GETPOST('cancel', 'aZ09');
-$contextpage = GETPOST('contextpage', 'aZ') ? GETPOST('contextpage', 'aZ') : 'contratocard'; // To manage different context of search
+$contextpage = GETPOST('contextpage', 'aZ') ? GETPOST('contextpage', 'aZ') : 'parcelamentocard'; // To manage different context of search
 $backtopage = GETPOST('backtopage', 'alpha');
 $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');
 $lineid   = GETPOST('lineid', 'int');
+$contrato = GETPOST('contrato', 'int');
+
 
 // Initialize technical objects
-$object = new Contrato($db);
+$object = new Parcelamento($db);
 $extrafields = new ExtraFields($db);
+$object_contrato = new Contrato($db);
 $diroutputmassaction = $conf->contratos->dir_output.'/temp/massgeneration/'.$user->id;
-$hookmanager->initHooks(array('contratocard', 'globalcard')); // Note that conf->hooks_modules contains array
-
+$hookmanager->initHooks(array('parcelamentocard', 'globalcard')); // Note that conf->hooks_modules contains array
 
 // Fetch optionals attributes and labels
 $extrafields->fetch_name_optionals_label($object->table_element);
@@ -127,11 +131,11 @@ include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php'; // Must be includ
 // Set $enablepermissioncheck to 1 to enable a minimum low level of checks
 $enablepermissioncheck = 0;
 if ($enablepermissioncheck) {
-	$permissiontoread = $user->rights->contratos->contrato->read;
-	$permissiontoadd = $user->rights->contratos->contrato->write; // Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
-	$permissiontodelete = $user->rights->contratos->contrato->delete || ($permissiontoadd && isset($object->status) && $object->status == $object::STATUS_DRAFT);
-	$permissionnote = $user->rights->contratos->contrato->write; // Used by the include of actions_setnotes.inc.php
-	$permissiondellink = $user->rights->contratos->contrato->write; // Used by the include of actions_dellink.inc.php
+	$permissiontoread = $user->rights->contratos->parcelamento->read;
+	$permissiontoadd = $user->rights->contratos->parcelamento->write; // Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
+	$permissiontodelete = $user->rights->contratos->parcelamento->delete || ($permissiontoadd && isset($object->status) && $object->status == $object::STATUS_DRAFT);
+	$permissionnote = $user->rights->contratos->parcelamento->write; // Used by the include of actions_setnotes.inc.php
+	$permissiondellink = $user->rights->contratos->parcelamento->write; // Used by the include of actions_dellink.inc.php
 } else {
 	$permissiontoread = 1;
 	$permissiontoadd = 1; // Used by the include of actions_addupdatedelete.inc.php and actions_lineupdown.inc.php
@@ -140,7 +144,7 @@ if ($enablepermissioncheck) {
 	$permissiondellink = 1;
 }
 
-$upload_dir = $conf->contratos->multidir_output[isset($object->entity) ? $object->entity : 1].'/contrato';
+$upload_dir = $conf->contratos->multidir_output[isset($object->entity) ? $object->entity : 1].'/parcelamento';
 
 // Security check (enable the most restrictive one)
 //if ($user->socid > 0) accessforbidden();
@@ -164,19 +168,19 @@ if ($reshook < 0) {
 if (empty($reshook)) {
 	$error = 0;
 
-	$backurlforlist = dol_buildpath('/contratos/contrato_list.php', 1);
+	$backurlforlist = dol_buildpath('/contratos/parcelamento_list.php', 1);
 
 	if (empty($backtopage) || ($cancel && empty($id))) {
 		if (empty($backtopage) || ($cancel && strpos($backtopage, '__ID__'))) {
 			if (empty($id) && (($action != 'add' && $action != 'create') || $cancel)) {
 				$backtopage = $backurlforlist;
 			} else {
-				$backtopage = dol_buildpath('/contratos/contrato_card.php', 1).'?id='.((!empty($id) && $id > 0) ? $id : '__ID__');
+				$backtopage = dol_buildpath('/contratos/parcelamento_card.php', 1).'?id='.((!empty($id) && $id > 0) ? $id : '__ID__');
 			}
 		}
 	}
 
-	$triggermodname = 'CONTRATOS_CONTRATO_MODIFY'; // Name of trigger action code to execute when we modify record
+	$triggermodname = 'CONTRATOS_PARCELAMENTO_MODIFY'; // Name of trigger action code to execute when we modify record
 
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
 	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
@@ -201,9 +205,9 @@ if (empty($reshook)) {
 	}
 
 	// Actions to send emails
-	$triggersendname = 'CONTRATOS_CONTRATO_SENTBYMAIL';
-	$autocopy = 'MAIN_MAIL_AUTOCOPY_CONTRATO_TO';
-	$trackid = 'contrato'.$object->id;
+	$triggersendname = 'CONTRATOS_PARCELAMENTO_SENTBYMAIL';
+	$autocopy = 'MAIN_MAIL_AUTOCOPY_PARCELAMENTO_TO';
+	$trackid = 'parcelamento'.$object->id;
 	include DOL_DOCUMENT_ROOT.'/core/actions_sendmails.inc.php';
 }
 
@@ -220,7 +224,7 @@ $form = new Form($db);
 $formfile = new FormFile($db);
 $formproject = new FormProjets($db);
 
-$title = $langs->trans("Contrato");
+$title = $langs->trans("Parcelamento");
 $help_url = '';
 llxHeader('', $title, $help_url);
 
@@ -247,9 +251,9 @@ if ($action == 'create') {
 		exit;
 	}
 
-	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("Contrato")), '', 'object_'.$object->picto);
+	print load_fiche_titre($langs->trans("NewObject", $langs->transnoentitiesnoconv("Parcelamento")), '', 'object_'.$object->picto);
 
-	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
+	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'?contrato='.$contrato.'">';
 	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="add">';
 	if ($backtopage) {
@@ -267,9 +271,88 @@ if ($action == 'create') {
 	print '<table class="border centpercent tableforfieldcreate">'."\n";
 
 	// Common attributes
-	//include DOL_DOCUMENT_ROOT.'/core/tpl/commonfields_add.tpl.php';
-	include DOL_DOCUMENT_ROOT.'/custom/contratos/core/tpl/parcelamentofields_add.tpl.php';
 
+	//include 'core/tpl/parcelamentofields_add.tpl.php';
+	// SQL to search the contract data that will suffer a new portion
+	$sql = "SELECT * FROM ". MAIN_DB_PREFIX. $object_contrato->table_element;
+	$sql .= " WHERE rowid=". $contrato;
+
+	$resql = $object_contrato->db->query($sql);
+	$result = $object_contrato->db->fetch_array($resql);
+
+	
+	$object->fields = dol_sort_array($object->fields, 'position');
+	
+	foreach ($object->fields as $key => $val) {
+	// Discard if extrafield is a hidden field on form
+	if (abs($val['visible']) != 1 && abs($val['visible']) != 3) {
+		continue;
+	}
+
+	if (array_key_exists('enabled', $val) && isset($val['enabled']) && !verifCond($val['enabled'])) {
+		continue; // We don't want this field
+	}
+
+	print '<tr class="field_'.$key.'">';
+	print '<td';
+	print ' class="titlefieldcreate';
+	if (isset($val['notnull']) && $val['notnull'] > 0) {
+		print ' fieldrequired';
+	}
+	if ($val['type'] == 'text' || $val['type'] == 'html') {
+		print ' tdtop';
+	}
+	print '"';
+	print '>';
+	if (!empty($val['help'])) {
+		print $form->textwithpicto($langs->trans($val['label']), $langs->trans($val['help']));
+	} else {
+		print $langs->trans($val['label']);
+	}
+	print '</td>';
+	print '<td class="valuefieldcreate">';
+	if (!empty($val['picto'])) {
+		print img_picto('', $val['picto'], '', false, 0, 0, '', 'pictofixedwidth');
+	}
+	if (in_array($val['type'], array('int', 'integer'))) {
+		$value = GETPOST($key, 'int');
+	} elseif ($val['type'] == 'double') {
+		$value = price2num(GETPOST($key, 'alphanohtml'));
+	} elseif ($val['type'] == 'text' || $val['type'] == 'html') {
+		$value = GETPOST($key, 'restricthtml');
+	} elseif ($val['type'] == 'date') {
+		$value = dol_mktime(12, 0, 0, GETPOST($key.'month', 'int'), GETPOST($key.'day', 'int'), GETPOST($key.'year', 'int'));
+	} elseif ($val['type'] == 'datetime') {
+		$value = dol_mktime(GETPOST($key.'hour', 'int'), GETPOST($key.'min', 'int'), 0, GETPOST($key.'month', 'int'), GETPOST($key.'day', 'int'), GETPOST($key.'year', 'int'));
+	} elseif ($val['type'] == 'boolean') {
+		$value = (GETPOST($key) == 'on' ? 1 : 0);
+	} elseif ($val['type'] == 'price') {
+		$value = price2num(GETPOST($key));
+	} elseif ($key == 'lang') {
+		$value = GETPOST($key, 'aZ09');
+	} else {
+		$value = GETPOST($key, 'alphanohtml');
+	}
+	if (!empty($val['noteditable'])) {
+		print $object->showOutputField($val, $key, $value, '', '', '', 0);
+	} else {
+		if ($key == 'lang') {
+			print img_picto('', 'language', 'class="pictofixedwidth"');
+			print $formadmin->select_language($value, $key, 0, null, 1, 0, 0, 'minwidth300', 2);
+		} else {
+			if ($key == 'contratoprincipal'){
+				print $result['ref'];
+				print $object->showInputField($val, $key, $result['rowid'], "readonly hidden", '', '', 0);
+			} elseif ($key == 'valor'){
+				print $object->showInputField($val, $key, $result['valor'], 'readonly', '', '', 0);
+			} else {
+				print $object->showInputField($val, $key, $value, '', '', '', 0);
+			}
+		}
+	}
+	print '</td>';
+	print '</tr>';
+	}
 	// Other attributes
 	include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_add.tpl.php';
 
@@ -286,9 +369,9 @@ if ($action == 'create') {
 
 // Part to edit record
 if (($id || $ref) && $action == 'edit') {
-	print load_fiche_titre($langs->trans("Contrato"), '', 'object_'.$object->picto);
+	print load_fiche_titre($langs->trans("Parcelamento"), '', 'object_'.$object->picto);
 
-	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
+	print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'?action=create&contrato='.$contrato.'">';
 	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="update">';
 	print '<input type="hidden" name="id" value="'.$object->id.'">';
@@ -322,14 +405,14 @@ if (($id || $ref) && $action == 'edit') {
 if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'create'))) {
 	$res = $object->fetch_optionals();
 
-	$head = contratoPrepareHead($object);
-	print dol_get_fiche_head($head, 'card', $langs->trans("Contrato"), -1, $object->picto);
+	$head = parcelamentoPrepareHead($object);
+	print dol_get_fiche_head($head, 'card', $langs->trans("Parcelamento"), -1, $object->picto);
 
 	$formconfirm = '';
 
 	// Confirmation to delete
 	if ($action == 'delete') {
-		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('DeleteContrato'), $langs->trans('ConfirmDeleteObject'), 'confirm_delete', '', 0, 1);
+		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"].'?id='.$object->id, $langs->trans('DeleteParcelamento'), $langs->trans('ConfirmDeleteObject'), 'confirm_delete', '', 0, 1);
 	}
 	// Confirmation to delete line
 	if ($action == 'deleteline') {
@@ -373,7 +456,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	// Object card
 	// ------------------------------------------------------------
-	$linkback = '<a href="'.dol_buildpath('/contratos/contrato_list.php', 1).'?restore_lastsearch_values=1'.(!empty($socid) ? '&socid='.$socid : '').'">'.$langs->trans("BackToList").'</a>';
+	$linkback = '<a href="'.dol_buildpath('/contratos/parcelamento_list.php', 1).'?restore_lastsearch_values=1'.(!empty($socid) ? '&socid='.$socid : '').'">'.$langs->trans("BackToList").'</a>';
 
 	$morehtmlref = '<div class="refidno">';
 	/*
@@ -500,13 +583,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
 		}
 
-		// Botão de parcelamento
-		// Se o objeto for um contrato principal, o botão será criado, redireciona para uma página com as parcelas já existentes.
-		if (!$object->contratoprincipal){
-			print '<a class="butAction" href="contrato_list2.php?id='. $object->id. '">'. 'parcelas'. '</a>'. "\n";
-		}
-		
 		if (empty($reshook)) {
+			// Button to show the new portions
+			print '<a class="butAction" href="contrato_list2.php?id='. $object->contratoprincipal. '">'. 'parcelas'. '</a>'. "\n";
+
 			// Send
 			if (empty($user->socid)) {
 				print dolGetButtonAction($langs->trans('SendMail'), '', 'default', $_SERVER["PHP_SELF"].'?id='.$object->id.'&action=presend&mode=init&token='.newToken().'#formmailbeforetitle');
@@ -575,11 +655,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			$urlsource = $_SERVER["PHP_SELF"]."?id=".$object->id;
 			$genallowed = $permissiontoread; // If you can read, you can build the PDF to read content
 			$delallowed = $permissiontoadd; // If you can create/edit, you can remove a file on card
-			print $formfile->showdocuments('contratos:Contrato', $object->element.'/'.$objref, $filedir, $urlsource, $genallowed, $delallowed, $object->model_pdf, 1, 0, 0, 28, 0, '', '', '', $langs->defaultlang);
+			print $formfile->showdocuments('contratos:Parcelamento', $object->element.'/'.$objref, $filedir, $urlsource, $genallowed, $delallowed, $object->model_pdf, 1, 0, 0, 28, 0, '', '', '', $langs->defaultlang);
 		}
 
 		// Show links to link elements
-		$linktoelem = $form->showLinkToObjectBlock($object, null, array('contrato'));
+		$linktoelem = $form->showLinkToObjectBlock($object, null, array('parcelamento'));
 		$somethingshown = $form->showLinkedObjectBlock($object, $linktoelem);
 
 
@@ -587,7 +667,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 		$MAXEVENT = 10;
 
-		$morehtmlcenter = dolGetButtonTitle($langs->trans('SeeAll'), '', 'fa fa-list-alt imgforviewmode', dol_buildpath('/contratos/contrato_agenda.php', 1).'?id='.$object->id);
+		$morehtmlcenter = dolGetButtonTitle($langs->trans('SeeAll'), '', 'fa fa-list-alt imgforviewmode', dol_buildpath('/contratos/parcelamento_agenda.php', 1).'?id='.$object->id);
 
 		// List of actions on element
 		include_once DOL_DOCUMENT_ROOT.'/core/class/html.formactions.class.php';
@@ -603,10 +683,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	}
 
 	// Presend form
-	$modelmail = 'contrato';
+	$modelmail = 'parcelamento';
 	$defaulttopic = 'InformationMessage';
 	$diroutput = $conf->contratos->dir_output;
-	$trackid = 'contrato'.$object->id;
+	$trackid = 'parcelamento'.$object->id;
 
 	include DOL_DOCUMENT_ROOT.'/core/tpl/card_presend.tpl.php';
 }

@@ -289,7 +289,7 @@ $sql .= $hookmanager->resPrint;
 if ($object->ismultientitymanaged == 1) {
 	$sql .= " WHERE t.entity IN (".getEntity($object->element).")";
 } else {
-	$sql .= " WHERE contratoprincipal IS NULL";
+	$sql .= " WHERE contratoprincipal = ". $id;
 }
 foreach ($search as $key => $val) {
 	if (array_key_exists($key, $object->fields)) {
@@ -447,6 +447,7 @@ foreach ($search as $key => $val) {
 if ($optioncss != '') {
 	$param .= '&optioncss='.urlencode($optioncss);
 }
+$param.= '&id='. $id;
 // Add $param from extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_param.tpl.php';
 // Add $param from hooks
@@ -469,7 +470,7 @@ if (GETPOST('nomassaction', 'int') || in_array($massaction, array('presend', 'pr
 }
 $massactionbutton = $form->selectMassAction('', $arrayofmassactions);
 
-print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">'."\n";
+print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'.?id='.$id.'">'."\n";
 if ($optioncss != '') {
 	print '<input type="hidden" name="optioncss" value="'.$optioncss.'">';
 }
@@ -480,7 +481,6 @@ print '<input type="hidden" name="sortfield" value="'.$sortfield.'">';
 print '<input type="hidden" name="sortorder" value="'.$sortorder.'">';
 print '<input type="hidden" name="page" value="'.$page.'">';
 print '<input type="hidden" name="contextpage" value="'.$contextpage.'">';
-
 $newcardbutton = dolGetButtonTitle($langs->trans('New'), '', 'fa fa-plus-circle', dol_buildpath('/contratos/contrato_card.php', 1).'?action=create&backtopage='.urlencode($_SERVER['PHP_SELF']), '', $permissiontoadd);
 
 print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'object_'.$object->picto, 0, $newcardbutton, '', $limit, 0, 0, 1);
@@ -563,6 +563,10 @@ foreach ($object->fields as $key => $val) {
 		print '</td>';
 	}
 }
+
+// Botão para calcular reparcelamento de parcelas
+print'<a class="butAction" href="parcelamento_card.php?action=create&contrato='. $id. '">'. 'reparcelamento'. '</a>'. "\n";
+
 // Extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_input.tpl.php';
 
@@ -573,7 +577,7 @@ print $hookmanager->resPrint;
 // Action column
 print '<td class="liste_titre maxwidthsearch">';
 $searchpicto = $form->showFilterButtons();
-print $searchpicto;
+print $searchpicto;	
 print '</td>';
 print '</tr>'."\n";
 
@@ -741,7 +745,7 @@ if (in_array('builddoc', $arrayofmassactions) && ($nbtotalofrecords === '' || $n
 	$formfile = new FormFile($db);
 
 	// Show list of available documents
-	$urlsource = $_SERVER['PHP_SELF'].'?sortfield='.$sortfield.'&sortorder='.$sortorder;
+	$urlsource = $_SERVER['PHP_SELF'].'?sortfield='.$sortfield.'&sortorder='.$sortorder.'&id='.$id;
 	$urlsource .= str_replace('&amp;', '&', $param);
 
 	$filedir = $diroutputmassaction;
@@ -751,6 +755,9 @@ if (in_array('builddoc', $arrayofmassactions) && ($nbtotalofrecords === '' || $n
 	print $formfile->showdocuments('massfilesarea_contratos', '', $filedir, $urlsource, 0, $delallowed, '', 1, 1, 0, 48, 1, $param, $title, '', '', '', null, $hidegeneratedfilelistifempty);
 }
 
+$sql = 'SELECT ';
+echo "<input type='input' value='{$object->value}'></input>";
+print '<input type="input" value=1 placeholder="Quantidade de parcelas" ></input>';
 // End of page
 llxFooter();
 $db->close();

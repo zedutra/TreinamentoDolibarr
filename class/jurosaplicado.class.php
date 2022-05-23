@@ -17,9 +17,9 @@
  */
 
 /**
- * \file        class/contrato.class.php
+ * \file        class/jurosaplicado.class.php
  * \ingroup     contratos
- * \brief       This file is a CRUD class file for Contrato (Create/Read/Update/Delete)
+ * \brief       This file is a CRUD class file for JurosAplicado (Create/Read/Update/Delete)
  */
 
 // Put here all includes required by your class file
@@ -28,9 +28,9 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/commonobject.class.php';
 //require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 
 /**
- * Class for Contrato
+ * Class for JurosAplicado
  */
-class Contrato extends CommonObject
+class JurosAplicado extends CommonObject
 {
 	/**
 	 * @var string ID of module.
@@ -40,12 +40,12 @@ class Contrato extends CommonObject
 	/**
 	 * @var string ID to identify managed object.
 	 */
-	public $element = 'contrato';
+	public $element = 'jurosaplicado';
 
 	/**
 	 * @var string Name of table without prefix where object is stored. This is also the key used for extrafields management.
 	 */
-	public $table_element = 'contratos_contrato';
+	public $table_element = 'contratos_jurosaplicado';
 
 	/**
 	 * @var int  Does this object support multicompany module ?
@@ -59,9 +59,9 @@ class Contrato extends CommonObject
 	public $isextrafieldmanaged = 1;
 
 	/**
-	 * @var string String with name of icon for contrato. Must be the part after the 'object_' into object_contrato.png
+	 * @var string String with name of icon for jurosaplicado. Must be the part after the 'object_' into object_jurosaplicado.png
 	 */
-	public $picto = 'contrato@contratos';
+	public $picto = 'jurosaplicado@contratos';
 
 
 	const STATUS_DRAFT = 0;
@@ -109,20 +109,16 @@ class Contrato extends CommonObject
 		'fk_user_modif' => array('type'=>'integer:User:user/class/user.class.php', 'label'=>'UserModif', 'enabled'=>'1', 'position'=>511, 'notnull'=>-1, 'visible'=>-2,),
 		'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'enabled'=>'1', 'position'=>1000, 'notnull'=>-1, 'visible'=>-2,),
 		'status' => array('type'=>'integer', 'label'=>'Status', 'enabled'=>'1', 'position'=>1000, 'notnull'=>1, 'visible'=>1, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Rascunho', '1'=>'Validado', '9'=>'Cancelado'), 'validate'=>'1',),
-		'contratoprincipal' => array('type'=>'integer:Contrato:custom/contratos/class/contrato.class.php:1:contratoprincipal IS NULL', 'label'=>'ContratoPrincipal', 'enabled'=>'1', 'position'=>11, 'notnull'=>-1, 'visible'=>1, 'index'=>1,),
-		'data' => array('type'=>'datetime', 'label'=>'Data', 'enabled'=>'1', 'position'=>12, 'notnull'=>0, 'visible'=>1, 'index'=>1,),
-		'valor' => array('type'=>'price', 'label'=>'Valor', 'enabled'=>'1', 'position'=>14, 'notnull'=>1, 'visible'=>1, 'index'=>1,),
+		'nome' => array('type'=>'varchar(45)', 'label'=>'Nome', 'enabled'=>'1', 'position'=>11, 'notnull'=>1, 'visible'=>1, 'index'=>1,),
 	);
 	public $rowid;
-	public $ref;
 	public $date_creation;
 	public $fk_user_creat;
 	public $fk_user_modif;
 	public $import_key;
+	public $model_pdf;
 	public $status;
-	public $contratoprincipal;
-	public $data;
-	public $valor;
+	public $nome;
 	// END MODULEBUILDER PROPERTIES
 
 
@@ -131,17 +127,17 @@ class Contrato extends CommonObject
 	// /**
 	//  * @var string    Name of subtable line
 	//  */
-	// public $table_element_line = 'contratos_contratoline';
+	// public $table_element_line = 'contratos_jurosaplicadoline';
 
 	// /**
 	//  * @var string    Field with ID of parent key if this object has a parent
 	//  */
-	// public $fk_element = 'fk_contrato';
+	// public $fk_element = 'fk_jurosaplicado';
 
 	// /**
 	//  * @var string    Name of subtable class that manage subtable lines
 	//  */
-	// public $class_element_line = 'Contratoline';
+	// public $class_element_line = 'JurosAplicadoline';
 
 	// /**
 	//  * @var array	List of child tables. To test if we can delete object.
@@ -153,10 +149,10 @@ class Contrato extends CommonObject
 	//  *               If name matches '@ClassNAme:FilePathClass;ParentFkFieldName' it will
 	//  *               call method deleteByParentField(parentId, ParentFkFieldName) to fetch and delete child object
 	//  */
-	// protected $childtablesoncascade = array('contratos_contratodet');
+	// protected $childtablesoncascade = array('contratos_jurosaplicadodet');
 
 	// /**
-	//  * @var ContratoLine[]     Array of subtable lines
+	//  * @var JurosAplicadoLine[]     Array of subtable lines
 	//  */
 	// public $lines = array();
 
@@ -181,7 +177,7 @@ class Contrato extends CommonObject
 		}
 
 		// Example to show how to set values of fields definition dynamically
-		/*if ($user->rights->contratos->contrato->read) {
+		/*if ($user->rights->contratos->jurosaplicado->read) {
 			$this->fields['myfield']['visible'] = 1;
 			$this->fields['myfield']['noteditable'] = 0;
 		}*/
@@ -214,29 +210,11 @@ class Contrato extends CommonObject
 	 */
 	public function create(User $user, $notrigger = false)
 	{
-		$error = 0;
-
-		// Executa o trigger
-		$result = $this->call_trigger('CONTRATOS_CREATE', $user);
-
-		if ($result <0){
-			$error++;
-		}
-
-		if (!$error){
-			$this->db->commit();
-			return $this->createCommon($user, $notrigger);
-			
-		} else {
-			$this->db->rollback();
-			return -1;
-		}
-
-		//$resultcreate = $this->createCommon($user, $notrigger);
+		$resultcreate = $this->createCommon($user, $notrigger);
 
 		//$resultvalidate = $this->validate($user, $notrigger);
 
-		//return $resultcreate;
+		return $resultcreate;
 	}
 
 	/**
@@ -456,32 +434,8 @@ class Contrato extends CommonObject
 	 * @return int             <0 if KO, >0 if OK
 	 */
 	public function update(User $user, $notrigger = false)
-	{	
-		$error = 0;
-		$sql = "SELECT contratoprincipal";
-		$sql .= " FROM ". MAIN_DB_PREFIX. $this->table_element;
-		$sql .= " WHERE rowid=". $this->id;
-
-		$resql = $this->db->query($sql);
-
-		$results_array = $this->db->fetch_array($resql);
-
-		if ((!$this->contratoprincipal && $results_array[0]) || ($this->contratoprincipal && !$results_array[0])){
-			$this->call_trigger('MODIFY_PORTION_MAINCONTRACT', $user);
-			$error++;
-
-		} else {
-			return $this->updateCommon($user, $notrigger);
-		}
-
-		if (!$error){
-			$this->db->commit();
-			return $this->updateCommon($user, $notrigger);
-		} else {
-			$this->db->rollback();
-			return -1;
-		}
-		
+	{
+		return $this->updateCommon($user, $notrigger);
 	}
 
 	/**
@@ -537,8 +491,8 @@ class Contrato extends CommonObject
 			return 0;
 		}
 
-		/*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->contratos->contrato->write))
-		 || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->contratos->contrato->contrato_advance->validate))))
+		/*if (! ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->contratos->jurosaplicado->write))
+		 || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && ! empty($user->rights->contratos->jurosaplicado->jurosaplicado_advance->validate))))
 		 {
 		 $this->error='NotEnoughPermissions';
 		 dol_syslog(get_class($this)."::valid ".$this->error, LOG_ERR);
@@ -580,7 +534,7 @@ class Contrato extends CommonObject
 
 			if (!$error && !$notrigger) {
 				// Call trigger
-				$result = $this->call_trigger('CONTRATO_VALIDATE', $user);
+				$result = $this->call_trigger('JUROSAPLICADO_VALIDATE', $user);
 				if ($result < 0) {
 					$error++;
 				}
@@ -594,8 +548,8 @@ class Contrato extends CommonObject
 			// Rename directory if dir was a temporary ref
 			if (preg_match('/^[\(]?PROV/i', $this->ref)) {
 				// Now we rename also files into index
-				$sql = 'UPDATE '.MAIN_DB_PREFIX."ecm_files set filename = CONCAT('".$this->db->escape($this->newref)."', SUBSTR(filename, ".(strlen($this->ref) + 1).")), filepath = 'contrato/".$this->db->escape($this->newref)."'";
-				$sql .= " WHERE filename LIKE '".$this->db->escape($this->ref)."%' AND filepath = 'contrato/".$this->db->escape($this->ref)."' and entity = ".$conf->entity;
+				$sql = 'UPDATE '.MAIN_DB_PREFIX."ecm_files set filename = CONCAT('".$this->db->escape($this->newref)."', SUBSTR(filename, ".(strlen($this->ref) + 1).")), filepath = 'jurosaplicado/".$this->db->escape($this->newref)."'";
+				$sql .= " WHERE filename LIKE '".$this->db->escape($this->ref)."%' AND filepath = 'jurosaplicado/".$this->db->escape($this->ref)."' and entity = ".$conf->entity;
 				$resql = $this->db->query($sql);
 				if (!$resql) {
 					$error++; $this->error = $this->db->lasterror();
@@ -604,15 +558,15 @@ class Contrato extends CommonObject
 				// We rename directory ($this->ref = old ref, $num = new ref) in order not to lose the attachments
 				$oldref = dol_sanitizeFileName($this->ref);
 				$newref = dol_sanitizeFileName($num);
-				$dirsource = $conf->contratos->dir_output.'/contrato/'.$oldref;
-				$dirdest = $conf->contratos->dir_output.'/contrato/'.$newref;
+				$dirsource = $conf->contratos->dir_output.'/jurosaplicado/'.$oldref;
+				$dirdest = $conf->contratos->dir_output.'/jurosaplicado/'.$newref;
 				if (!$error && file_exists($dirsource)) {
 					dol_syslog(get_class($this)."::validate() rename dir ".$dirsource." into ".$dirdest);
 
 					if (@rename($dirsource, $dirdest)) {
 						dol_syslog("Rename ok");
 						// Rename docs starting with $oldref with $newref
-						$listoffiles = dol_dir_list($conf->contratos->dir_output.'/contrato/'.$newref, 'files', 1, '^'.preg_quote($oldref, '/'));
+						$listoffiles = dol_dir_list($conf->contratos->dir_output.'/jurosaplicado/'.$newref, 'files', 1, '^'.preg_quote($oldref, '/'));
 						foreach ($listoffiles as $fileentry) {
 							$dirsource = $fileentry['name'];
 							$dirdest = preg_replace('/^'.preg_quote($oldref, '/').'/', $newref, $dirsource);
@@ -662,7 +616,7 @@ class Contrato extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_DRAFT, $notrigger, 'CONTRATO_UNVALIDATE');
+		return $this->setStatusCommon($user, self::STATUS_DRAFT, $notrigger, 'JUROSAPLICADO_UNVALIDATE');
 	}
 
 	/**
@@ -686,7 +640,7 @@ class Contrato extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_CANCELED, $notrigger, 'CONTRATO_CANCEL');
+		return $this->setStatusCommon($user, self::STATUS_CANCELED, $notrigger, 'JUROSAPLICADO_CANCEL');
 	}
 
 	/**
@@ -710,7 +664,7 @@ class Contrato extends CommonObject
 		 return -1;
 		 }*/
 
-		return $this->setStatusCommon($user, self::STATUS_VALIDATED, $notrigger, 'CONTRATO_REOPEN');
+		return $this->setStatusCommon($user, self::STATUS_VALIDATED, $notrigger, 'JUROSAPLICADO_REOPEN');
 	}
 
 	/**
@@ -733,14 +687,14 @@ class Contrato extends CommonObject
 
 		$result = '';
 
-		$label = img_picto('', $this->picto).' <u>'.$langs->trans("Contrato").'</u>';
+		$label = img_picto('', $this->picto).' <u>'.$langs->trans("JurosAplicado").'</u>';
 		if (isset($this->status)) {
 			$label .= ' '.$this->getLibStatut(5);
 		}
 		$label .= '<br>';
 		$label .= '<b>'.$langs->trans('Ref').':</b> '.$this->ref;
 
-		$url = dol_buildpath('/contratos/contrato_card.php', 1).'?id='.$this->id;
+		$url = dol_buildpath('/contratos/jurosaplicado_card.php', 1).'?id='.$this->id;
 
 		if ($option != 'nolink') {
 			// Add param to save lastsearch_values or not
@@ -756,7 +710,7 @@ class Contrato extends CommonObject
 		$linkclose = '';
 		if (empty($notooltip)) {
 			if (!empty($conf->global->MAIN_OPTIMIZEFORTEXTBROWSER)) {
-				$label = $langs->trans("ShowContrato");
+				$label = $langs->trans("ShowJurosAplicado");
 				$linkclose .= ' alt="'.dol_escape_htmltag($label, 1).'"';
 			}
 			$linkclose .= ' title="'.dol_escape_htmltag($label, 1).'"';
@@ -816,7 +770,7 @@ class Contrato extends CommonObject
 		//if ($withpicto != 2) $result.=(($addlabel && $this->label) ? $sep . dol_trunc($this->label, ($addlabel > 1 ? $addlabel : 0)) : '');
 
 		global $action, $hookmanager;
-		$hookmanager->initHooks(array('contratodao'));
+		$hookmanager->initHooks(array('jurosaplicadodao'));
 		$parameters = array('id'=>$this->id, 'getnomurl'=>$result);
 		$reshook = $hookmanager->executeHooks('getNomUrl', $parameters, $this, $action); // Note that $action and $object may have been modified by some hooks
 		if ($reshook > 0) {
@@ -952,8 +906,8 @@ class Contrato extends CommonObject
 	{
 		$this->lines = array();
 
-		$objectline = new ContratoLine($this->db);
-		$result = $objectline->fetchAll('ASC', 'position', 0, 0, array('customsql'=>'fk_contrato = '.((int) $this->id)));
+		$objectline = new JurosAplicadoLine($this->db);
+		$result = $objectline->fetchAll('ASC', 'position', 0, 0, array('customsql'=>'fk_jurosaplicado = '.((int) $this->id)));
 
 		if (is_numeric($result)) {
 			$this->error = $this->error;
@@ -975,15 +929,15 @@ class Contrato extends CommonObject
 		global $langs, $conf;
 		$langs->load("contratos@contratos");
 
-		if (empty($conf->global->CONTRATOS_CONTRATO_ADDON)) {
-			$conf->global->CONTRATOS_CONTRATO_ADDON = 'mod_contrato_standard';
+		if (empty($conf->global->CONTRATOS_JUROSAPLICADO_ADDON)) {
+			$conf->global->CONTRATOS_JUROSAPLICADO_ADDON = 'mod_jurosaplicado_standard';
 		}
 
-		if (!empty($conf->global->CONTRATOS_CONTRATO_ADDON)) {
+		if (!empty($conf->global->CONTRATOS_JUROSAPLICADO_ADDON)) {
 			$mybool = false;
 
-			$file = $conf->global->CONTRATOS_CONTRATO_ADDON.".php";
-			$classname = $conf->global->CONTRATOS_CONTRATO_ADDON;
+			$file = $conf->global->CONTRATOS_JUROSAPLICADO_ADDON.".php";
+			$classname = $conf->global->CONTRATOS_JUROSAPLICADO_ADDON;
 
 			// Include file with class
 			$dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
@@ -1041,12 +995,12 @@ class Contrato extends CommonObject
 		$langs->load("contratos@contratos");
 
 		if (!dol_strlen($modele)) {
-			$modele = 'standard_contrato';
+			$modele = 'standard_jurosaplicado';
 
 			if (!empty($this->model_pdf)) {
 				$modele = $this->model_pdf;
-			} elseif (!empty($conf->global->CONTRATO_ADDON_PDF)) {
-				$modele = $conf->global->CONTRATO_ADDON_PDF;
+			} elseif (!empty($conf->global->JUROSAPLICADO_ADDON_PDF)) {
+				$modele = $conf->global->JUROSAPLICADO_ADDON_PDF;
 			}
 		}
 
@@ -1094,12 +1048,12 @@ class Contrato extends CommonObject
 require_once DOL_DOCUMENT_ROOT.'/core/class/commonobjectline.class.php';
 
 /**
- * Class ContratoLine. You can also remove this and generate a CRUD class for lines objects.
+ * Class JurosAplicadoLine. You can also remove this and generate a CRUD class for lines objects.
  */
-class ContratoLine extends CommonObjectLine
+class JurosAplicadoLine extends CommonObjectLine
 {
-	// To complete with content of an object ContratoLine
-	// We should have a field rowid, fk_contrato and position
+	// To complete with content of an object JurosAplicadoLine
+	// We should have a field rowid, fk_jurosaplicado and position
 
 	/**
 	 * @var int  Does object support extrafields ? 0=No, 1=Yes
